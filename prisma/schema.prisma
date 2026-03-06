@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enums to use
+enum Role { 
+  USER 
+  ADMIN 
+}
+
+enum Status {
+  PLAYING
+  PLAYED
+  COMPLETED
+  WANT_TO_PLAY 
+}
+
+enum GameRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum GameType {
+  VIDEO_GAME
+}
+
+// Models
+model User { 
+  id Int @id @default(autoincrement()) 
+  name String @db.VarChar(30) @unique
+  password String 
+  intro String?
+  avatar String?
+  role Role @default(USER)
+  createdAt DateTime @default(now()) 
+  banned Boolean @default(false)
+  bannedAt DateTime? @default(now())
+  bannedUntil DateTime? 
+  invitationCodeId Int
+
+  invitationCode InvitationCode @relation(fields: [invitationCodeId], references: [id])
+  
+  reviews GameReview[]
+  broadcasts Broadcast[]
+  broadcastComments BroadcastComment[]
+  broadcastLikes BroadcastLike[]
+  blocker Block[] @relation("initiators")
+  blocking Block[] @relation("blockedUsers")
+}
+
+model InvitationCode {
+  id Int @id @default(autoincrement())
+  code String @unique @db.VarChar(30)
+  createdAt DateTime @default(now())
+  createdBy String? 
+  isValid Boolean @default(true)
+
+  users User[]
+}
+
+model Game {
+  id String @id @default(cuid())
+  externalId String
+  gameType GameType
+  title String
+  slug String
+  description String? @db.Text
+  coverImage String?
+  releaseDate DateTime?
+  genres String[] @default([])
+  platforms String[] @default([])
+  developers String[] @default([])
+  publishers String[] @default([])
+
+  reviews GameReview[]
+  broadcasts Broadcast[]
+}
+
+model GameReview {
+  gameId String
+  userId Int 
+  rating Int?
+  status Status
+  content String?
+  createAt DateTime @default(now())
+  lastUpdateAt DateTime @updatedAt
+
+  @@id([gameId, userId])
+
+  game Game @relation(fields: [gameId], references: [id])
+  createByUser User @relation(fields: [userId], references: [id])
+}
+
+model Broadcast {
+  id Int @id @default(autoincrement())
+  gameId String
+  userId Int
+  rating Int?
+  status Status
+  content String?
+  createAt DateTime @default(now())
+
+  game Game @relation(fields: [gameId], references: [id])
+  createByUser User @relation(fields: [userId], references: [id])
+
+  comments BroadcastComment[]
+  likes BroadcastLike[]
+}
+
+model BroadcastComment {
+  id Int @id @default(autoincrement())
+  broadcastId Int
+  userId Int
+  content String
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id])
+  createByUser User @relation(fields: [userId], references: [id])
+}
+
+model BroadcastLike {
+  id Int @id @default(autoincrement())
+  broadcastId Int
+  userId Int
+  like Int @default(0)
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id])
+  createByUser User @relation(fields: [userId], references: [id])
+}
+
+model Block {
+  id Int @id @default(autoincrement())
+  initiatorId Int 
+  blockedUserId Int
+  ifActive Boolean @default(true)
+
+  initiator User @relation("initiators", fields: [initiatorId], references: [id])
+  blockedUser User @relation("blockedUsers", fields: [blockedUserId], references: [id])
+
+  @@unique([initiatorId, blockedUserId])
+}
