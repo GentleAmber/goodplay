@@ -5,12 +5,13 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // Enums to use
@@ -46,7 +47,7 @@ model User {
   role Role @default(USER)
   createdAt DateTime @default(now()) 
   banned Boolean @default(false)
-  bannedAt DateTime? @default(now())
+  bannedAt DateTime?
   bannedUntil DateTime? 
   invitationCodeId Int
 
@@ -66,6 +67,7 @@ model InvitationCode {
   createdAt DateTime @default(now())
   createdBy String? 
   isValid Boolean @default(true)
+  registerAsAdmin Boolean @default(false)
 
   users User[]
 }
@@ -83,6 +85,7 @@ model Game {
   platforms String[] @default([])
   developers String[] @default([])
   publishers String[] @default([])
+  requestStatus GameRequestStatus @default(APPROVED)
 
   reviews GameReview[]
   broadcasts Broadcast[]
