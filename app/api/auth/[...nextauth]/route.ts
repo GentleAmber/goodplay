@@ -1,7 +1,6 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
-// https://www.npmjs.com/package/bcryptjs
 import bcrypt from "bcryptjs"
 
 const handler = NextAuth({
@@ -32,6 +31,8 @@ const handler = NextAuth({
           id: String(user.id),
           name: user.name,
           role: user.role,
+          banned: user.banned,
+          image: user.avatar
         }
       },
     }),
@@ -45,6 +46,7 @@ const handler = NextAuth({
       if (user) {
         token.id = user.id
         token.role = user.role
+        token.banned = user.banned
       }
       return token
     },
@@ -52,6 +54,7 @@ const handler = NextAuth({
       if (session.user) {
         session.user.id = token.id
         session.user.role = token.role
+        session.user.banned = token.banned
       }
       return session
     },
