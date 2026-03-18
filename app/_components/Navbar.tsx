@@ -1,12 +1,13 @@
 "use client"
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useSession, signIn, signOut } from "next-auth/react"
 import { useRef, useState, useEffect } from "react"
 import { Role } from "@/generated/prisma"
 
 export default function Component() {
+  
+  const [avatar, setAvatar] = useState(null)
   const { data: session, status } = useSession()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -22,6 +23,18 @@ export default function Component() {
     return () => document.removeEventListener("mousedown", handleClick)
   }, [dropdownOpen])
 
+  useEffect(() => {
+    if (session) {
+      // If logged in, fetch user profile
+      fetch(`/api/users/${session.user.id}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.name) setAvatar(data.avatar)
+        })
+      console.log(avatar)
+    }
+  }, [session])
+
   if (status === "loading") return null
 
   return (
@@ -31,13 +44,18 @@ export default function Component() {
       {session
         ? <div className="dropdown" ref={dropdownRef}>
             <div id="navbar-avatar" onClick={() => setDropdownOpen((v) => !v)}>
-              <Image
-                src={session.user.image || "/voidAvatar.jpg"}
-                alt="User's avatar"
-                quality={80}
-                width={40}
-                height={40}
-              />
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-gray-600 bg-gray-800">
+                {avatar ? 
+                <img
+                    src={avatar || ""}
+                    alt={session.user.name || ""}
+                    className="h-full w-full object-cover"
+                  /> :
+                <div className="flex h-full w-full items-center justify-center text-lg font-bold text-gray-400">
+                  {session.user.name?.[0]?.toUpperCase()}
+                </div>
+                }
+              </div>
               <div className={`${dropdownOpen ? "" : "hidden"} dropdown-menu`}>
                 {session.user.role === Role.ADMIN ? <Link href="/management">Admin board</Link> : null}
                 <Link href="/account">Account</Link>

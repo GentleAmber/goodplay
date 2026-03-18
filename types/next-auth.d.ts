@@ -5,6 +5,7 @@ declare module "next-auth" {
   interface User extends DefaultUser {
     role: string
     banned: boolean
+    image: string
   }
 
   interface Session {
@@ -12,6 +13,7 @@ declare module "next-auth" {
       id: string
       role: string
       banned: boolean
+      image: string
     } & DefaultSession["user"]
   }
 }
@@ -21,5 +23,6 @@ declare module "next-auth/jwt" {
     id: string
     role: string
     banned: boolean
+    image: string
   }
 }

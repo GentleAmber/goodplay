@@ -13,13 +13,11 @@ import {
   AlertTriangle,
   Trash2,
   Megaphone,
-  UserPlus,
-  UserCheck,
   X,
   Rss,
 } from "lucide-react"
 import Link from "next/link"
-import STATUS_CONFIG from "@/lib/GameStatus"
+import STATUS_CONFIG from "@/app/_types/GameStatus"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -121,17 +119,17 @@ export default function Homepage() {
   const isBanned = session?.user?.banned === true
   const isAdmin = session?.user?.role === Role.ADMIN
 
-  const loadFeed = useCallback(() => {
+  function loadFeed() {
     fetch("/api/broadcasts/feed")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setFeed(data) })
-  }, [])
+  }
 
-  const loadMyBroadcasts = useCallback(() => {
+  function loadMyBroadcasts() {
     fetch("/api/broadcasts/mine")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setMyBroadcasts(data) })
-  }, [])
+  }
 
   useEffect(() => {
     if (!session) return
@@ -160,7 +158,7 @@ export default function Homepage() {
 
     loadFeed()
     loadMyBroadcasts()
-  }, [session, loadFeed, loadMyBroadcasts])
+  }, [session])
 
   // ── Loading ──
 

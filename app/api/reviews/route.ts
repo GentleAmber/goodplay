@@ -1,28 +1,22 @@
-import { getServerSession } from "next-auth"
+import getAuthUser from "@/lib/auth-helper"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { Status } from "@/generated/prisma/client"
 
 export async function GET(req: Request) {
-  const session = await getServerSession()
-  if (!session?.user?.name) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const user = await prisma.user.findFirst({
-    where: { name: session.user.name },
-    select: { id: true },
-  })
+  
+  const user = await getAuthUser()
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const url = new URL(req.url)
   const status = url.searchParams.get("status") || ""
 
-  const where: { userId: number; status?: string } = { userId: user.id }
+  const where: { userId: number; status?: Status } = { userId: user.id }
   const validStatuses = ["PLAYING", "PLAYED", "COMPLETED", "WANT_TO_PLAY"]
   if (status && validStatuses.includes(status)) {
-    where.status = status
+    where.status = status as Status
   }
 
   const reviews = await prisma.gameReview.findMany({

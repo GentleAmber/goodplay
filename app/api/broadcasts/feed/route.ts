@@ -1,19 +1,12 @@
-import { getServerSession } from "next-auth"
+import getAuthUser from "@/lib/auth-helper"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-  const session = await getServerSession()
-  if (!session?.user?.name) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const user = await prisma.user.findFirst({
-    where: { name: session.user.name },
-    select: { id: true },
-  })
+  
+  const user = await getAuthUser()
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   // Get IDs of users this person follows
@@ -29,11 +22,11 @@ export async function GET() {
 
   const broadcasts = await prisma.broadcast.findMany({
     where: { userId: { in: followedIds } },
-    take: 30,
     orderBy: { createAt: "desc" },
     include: {
       createByUser: { select: { id: true, name: true, avatar: true } },
       game: { select: { id: true, title: true, coverImage: true, slug: true } },
+      // used to determine if "I" have liked a broadcast
       likes: { where: { userId: user.id }, select: { id: true } },
       _count: { select: { comments: true, likes: true } },
     },

@@ -1,4 +1,4 @@
-import { getServerSession } from "next-auth"
+import getAuthUser from "@/lib/auth-helper"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
@@ -6,17 +6,10 @@ export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await getServerSession()
-  if (!session?.user?.name) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const user = await prisma.user.findFirst({
-    where: { name: session.user.name },
-    select: { id: true, banned: true },
-  })
+  
+  const user = await getAuthUser()
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   if (user.banned) {
     return NextResponse.json({ error: "You are banned" }, { status: 403 })

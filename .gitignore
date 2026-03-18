@@ -45,6 +45,7 @@ next-env.d.ts
 
 # document
 *.ods
+.~lock.*#
 
 # prisma
 /generated/prisma

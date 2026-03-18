@@ -223,6 +223,7 @@ export default function ReviewsPage() {
                       {review.rating}/10
                     </span>
                   )}
+                  <span>{new Date(review.lastUpdateAt).toLocaleDateString("en-UK", { year: "numeric", month: "short", day: "numeric" })}</span>
                 </div>
                 {review.content && (
                   <p className="mt-1 text-sm text-gray-400 line-clamp-1">

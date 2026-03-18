@@ -11,7 +11,7 @@ import {
   ArrowLeft,
   Rss,
 } from "lucide-react"
-import STATUS_CONFIG from "@/lib/GameStatus"
+import STATUS_CONFIG from "@/app/_types/GameStatus"
 
 // ── Types ────────────────────────────────────────────────────────────
 

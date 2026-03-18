@@ -32,7 +32,6 @@ const handler = NextAuth({
           name: user.name,
           role: user.role,
           banned: user.banned,
-          image: user.avatar
         }
       },
     }),
