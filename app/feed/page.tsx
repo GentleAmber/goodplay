@@ -12,6 +12,7 @@ import {
   Rss,
 } from "lucide-react"
 import STATUS_CONFIG from "@/app/_types/GameStatus"
+import BanBanner from "@/app/_components/BanBanner"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -88,7 +89,10 @@ export default function FeedPage() {
   }
 
   async function handleLike(broadcastId: number) {
-    if (isBanned) return
+    if (isBanned) {
+      alert("Action not allowed. You're currently banned.")
+      return
+    }
     await fetch(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
     loadFeed()
   }
@@ -113,7 +117,11 @@ export default function FeedPage() {
   }
 
   async function handleReply(broadcastId: number) {
-    if (isBanned || !replyText.trim()) return
+    if (isBanned) {
+      alert("Action not allowed. You're currently banned.")
+      return
+    }
+    if (!replyText.trim()) return
     await fetch(`/api/broadcasts/${broadcastId}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -140,6 +148,8 @@ export default function FeedPage() {
           Feed
         </h1>
       </div>
+
+      <BanBanner />
 
       {/* List */}
       {loading ? (
@@ -210,8 +220,7 @@ export default function FeedPage() {
               <div className="flex items-center gap-5 pt-1 text-sm text-gray-500">
                 <button
                   onClick={() => handleLike(b.id)}
-                  disabled={isBanned}
-                  className={`inline-flex items-center gap-1.5 hover:text-red-400 transition-colors ${isBanned ? "opacity-40 cursor-not-allowed" : ""} ${b.likedByMe ? "text-red-400" : ""}`}
+                  className={`inline-flex items-center gap-1.5 hover:text-red-400 transition-colors ${b.likedByMe ? "text-red-400" : ""}`}
                 >
                   <Heart className={`h-4 w-4 ${b.likedByMe ? "fill-current" : ""}`} />
                   {b._count.likes}
@@ -270,23 +279,21 @@ export default function FeedPage() {
                       )}
                     </div>
                   )}
-                  {!isBanned && (
-                    <div className="flex gap-2">
-                      <input
-                        value={replyingTo === b.id ? replyText : ""}
-                        onFocus={() => setReplyingTo(b.id)}
-                        onChange={(e) => { setReplyingTo(b.id); setReplyText(e.target.value) }}
-                        placeholder="Write a reply..."
-                        className="flex-1 rounded border border-gray-600 bg-gray-800 px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
-                      />
-                      <button
-                        onClick={() => handleReply(b.id)}
-                        className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-                      >
-                        Reply
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    <input
+                      value={replyingTo === b.id ? replyText : ""}
+                      onFocus={() => setReplyingTo(b.id)}
+                      onChange={(e) => { setReplyingTo(b.id); setReplyText(e.target.value) }}
+                      placeholder="Write a reply..."
+                      className="flex-1 rounded border border-gray-600 bg-gray-800 px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+                    />
+                    <button
+                      onClick={() => handleReply(b.id)}
+                      className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                    >
+                      Reply
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

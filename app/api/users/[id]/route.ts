@@ -22,6 +22,7 @@ export async function GET(
       createdAt: true,
       protectFollowList: true,
       banned: true,
+      role: true,
     },
   })
   if (!user) {
@@ -45,25 +46,17 @@ export async function GET(
     },
   })
 
-  // Broadcasts
-  const broadcasts = await prisma.broadcast.findMany({
-    where: { userId },
-    orderBy: { createAt: "desc" },
-    include: {
-      game: { select: { id: true, title: true, slug: true } },
-      _count: { select: { comments: true, likes: true } },
-    },
-  })
-
   // Check if current viewer is blocked by this user
   let isBlocked = false
   let isFollowing = false
+  let viewerId: number | null = null
   const session = await getServerSession()
   if (session?.user?.name) {
     const viewer = await prisma.user.findFirst({
       where: { name: session.user.name },
       select: { id: true },
     })
+    viewerId = viewer?.id ?? null
     if (viewer && viewer.id !== userId) {
       const block = await prisma.block.findFirst({
         where: { initiatorId: userId, blockedUserId: viewer.id, ifActive: true },
@@ -76,6 +69,21 @@ export async function GET(
       isFollowing = !!follow
     }
   }
+
+  // Broadcasts (after viewer resolution so we can include likedByMe)
+  const rawBroadcasts = await prisma.broadcast.findMany({
+    where: { userId },
+    orderBy: { createAt: "desc" },
+    include: {
+      game: { select: { id: true, title: true, slug: true } },
+      likes: viewerId ? { where: { userId: viewerId }, select: { id: true } } : false,
+      _count: { select: { comments: true, likes: true } },
+    },
+  })
+  const broadcasts = rawBroadcasts.map(({ likes, ...b }) => ({
+    ...b,
+    likedByMe: Array.isArray(likes) && likes.length > 0,
+  }))
 
   return NextResponse.json({
     ...user,

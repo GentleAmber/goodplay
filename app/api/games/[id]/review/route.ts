@@ -13,6 +13,9 @@ export async function POST(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
+  if (user.banned) {
+    return NextResponse.json({ error: "Action not allowed. You're currently banned." }, { status: 403 })
+  }
 
   const { id: gameId } = await params
   const body = await req.json()

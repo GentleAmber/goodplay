@@ -11,10 +11,13 @@ import {
   UserMinus,
   Lock,
   ShieldAlert,
+  ShieldOff,
   X,
   Megaphone,
   Trash2,
+  Loader2,
 } from "lucide-react"
+import { Role } from "@/generated/prisma"
 import STATUS_CONFIG from "@/app/_types/GameStatus"
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -36,6 +39,7 @@ interface ProfileBroadcast {
   status: string
   content: string | null
   createAt: string
+  likedByMe: boolean
   game: { id: string; title: string; slug: string }
   _count: { comments: number; likes: number }
 }
@@ -48,6 +52,7 @@ interface UserProfile {
   createdAt: string
   protectFollowList: boolean
   banned: boolean
+  role: string
   followerCount: number
   followingCount: number
   reviews: ProfileReview[]
@@ -103,14 +108,14 @@ export default function UserProfilePage() {
   const [listUsers, setListUsers] = useState<FollowUser[]>([])
   const [listLoading, setListLoading] = useState(false)
 
-  // Comments
-  const [openComments, setOpenComments] = useState<number | null>(null)
-  const [comments, setComments] = useState<Record<number, BroadcastComment[]>>({})
-  const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set())
-  const [replyText, setReplyText] = useState("")
+  // Admin ban
+  const [showBanModal, setShowBanModal] = useState(false)
+  const [banDuration, setBanDuration] = useState("7d")
+  const [banActing, setBanActing] = useState(false)
 
   const myUserId = session?.user?.id ? parseInt(session.user.id, 10) : null
   const isOwnProfile = myUserId !== null && myUserId === profile?.id
+  const isAdmin = session?.user?.role === Role.ADMIN
 
   const loadProfile = useCallback(() => {
     setLoading(true)
@@ -141,10 +146,25 @@ export default function UserProfilePage() {
     }
   }
 
-  async function handleDeleteBroadcast(broadcastId: number) {
-    if (!confirm("Delete this broadcast?")) return
-    const res = await fetch(`/api/broadcasts/${broadcastId}`, { method: "DELETE" })
+  async function handleBan() {
+    setBanActing(true)
+    const res = await fetch("/api/management/ban", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: parseInt(id, 10), duration: banDuration }),
+    })
+    if (res.ok) {
+      setShowBanModal(false)
+      loadProfile()
+    }
+    setBanActing(false)
+  }
+
+  async function handleUnban() {
+    setBanActing(true)
+    const res = await fetch(`/api/management/ban?userId=${id}`, { method: "DELETE" })
     if (res.ok) loadProfile()
+    setBanActing(false)
   }
 
   async function openFollowList(type: "followers" | "following") {
@@ -158,36 +178,6 @@ export default function UserProfilePage() {
       setListUsers([])
     }
     setListLoading(false)
-  }
-
-  async function loadComments(broadcastId: number) {
-    const res = await fetch(`/api/broadcasts/${broadcastId}/reply`)
-    if (res.ok) {
-      const data = await res.json()
-      setComments((prev) => ({ ...prev, [broadcastId]: data }))
-    }
-  }
-
-  function toggleComments(broadcastId: number) {
-    if (openComments === broadcastId) {
-      setOpenComments(null)
-    } else {
-      setOpenComments(broadcastId)
-      loadComments(broadcastId)
-    }
-    setReplyText("")
-  }
-
-  async function handleReply(broadcastId: number) {
-    if (!session || !replyText.trim()) return
-    await fetch(`/api/broadcasts/${broadcastId}/reply`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: replyText.trim() }),
-    })
-    setReplyText("")
-    loadComments(broadcastId)
-    loadProfile()
   }
 
   // ── Loading / Error ──
@@ -298,6 +288,27 @@ export default function UserProfilePage() {
               This user has blocked you. You cannot interact with their broadcasts.
             </p>
           )}
+
+          {/* Admin ban/unban button */}
+          {isAdmin && !isOwnProfile && profile.role !== "ADMIN" && (
+            profile.banned ? (
+              <button
+                onClick={handleUnban}
+                disabled={banActing}
+                className="mt-2 inline-flex items-center gap-2 rounded border border-green-500/40 px-4 py-2 text-sm font-medium text-green-400 hover:bg-green-500/10 disabled:opacity-50"
+              >
+                {banActing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldOff className="h-4 w-4" />}
+                Unban User
+              </button>
+            ) : (
+              <button
+                onClick={() => { setShowBanModal(true); setBanDuration("7d") }}
+                className="mt-2 inline-flex items-center gap-2 rounded border border-red-500/40 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
+              >
+                <ShieldAlert className="h-4 w-4" /> Ban User
+              </button>
+            )
+          )}
         </div>
       </section>
 
@@ -373,89 +384,62 @@ export default function UserProfilePage() {
       )}
 
       {/* Broadcasts tab */}
-      {tab === "broadcasts" && (
-        <section className="space-y-3">
-          {profile.broadcasts.length === 0 ? (
-            <div className="rounded-lg border border-gray-700 bg-gray-900 p-8 text-center text-gray-500">
-              No broadcasts yet.
-            </div>
-          ) : (
-            profile.broadcasts.map((b) => (
-              <div
-                key={b.id}
-                className="flex items-start gap-4 rounded-lg border border-gray-700 bg-gray-900 p-4"
+      <div className={tab === "broadcasts" ? "" : "hidden"}>
+        <BroadcastsSection
+          userId={profile.id}
+          initialBroadcasts={profile.broadcasts}
+          isOwnProfile={isOwnProfile}
+          isBlocked={profile.isBlocked}
+          hasSession={!!session}
+        />
+      </div>
+
+      {/* Ban modal (admin) */}
+      {showBanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-sm rounded-lg border border-gray-700 bg-gray-900 p-6 space-y-4">
+            <h3 className="font-semibold text-gray-200">
+              Ban user: <span className="text-red-400">{profile.name}</span>
+            </h3>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Duration</label>
+              <select
+                value={banDuration}
+                onChange={(e) => setBanDuration(e.target.value)}
+                className="w-full rounded border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
               >
-                <Megaphone className="h-5 w-5 shrink-0 text-gray-600 mt-0.5" />
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span>{statusLabel(b.status)}</span>
-                    {b.rating !== null && (
-                      <span className="flex items-center gap-0.5 text-yellow-400">
-                        <Star className="h-3 w-3 fill-current" />
-                        {b.rating}/10
-                      </span>
-                    )}
-                    <span>&middot; {timeAgo(b.createAt)}</span>
-                  </div>
-                  <Link
-                    href={`/library/videogames/${b.game.slug}`}
-                    className="block text-sm font-semibold text-blue-400 hover:underline"
-                  >
-                    {b.game.title}
-                  </Link>
-                  {b.content && (
-                    <p className="text-sm text-gray-300 line-clamp-3">{b.content}</p>
-                  )}
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span className="inline-flex items-center gap-1">
-                      <Heart className="h-3 w-3" /> {b._count.likes}
-                    </span>
-                    <button
-                      onClick={() => toggleComments(b.id)}
-                      className="inline-flex items-center gap-1 hover:text-blue-400"
-                    >
-                      <MessageCircle className="h-3 w-3" /> {b._count.comments}
-                    </button>
-                  </div>
-                  {openComments === b.id && (
-                    <div className="space-y-3 pt-1">
-                      <CommentsSection
-                        comments={comments[b.id] || []}
-                        expanded={expandedComments.has(b.id)}
-                        onExpand={() => setExpandedComments((prev) => new Set(prev).add(b.id))}
-                      />
-                      {session && !profile.isBlocked && (
-                        <div className="flex gap-2">
-                          <input
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            placeholder="Write a reply..."
-                            className="flex-1 rounded border border-gray-600 bg-gray-800 px-3 py-1.5 text-sm text-white focus:border-blue-500 focus:outline-none"
-                          />
-                          <button
-                            onClick={() => handleReply(b.id)}
-                            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-                          >
-                            Reply
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {isOwnProfile && (
-                  <button
-                    onClick={() => handleDeleteBroadcast(b.id)}
-                    className="shrink-0 rounded border border-red-500/40 p-2 text-red-400 hover:bg-red-500/10"
-                    title="Delete broadcast"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            ))
-          )}
-        </section>
+                <option value="1d">1 day</option>
+                <option value="3d">3 days</option>
+                <option value="7d">7 days</option>
+                <option value="15d">15 days</option>
+                <option value="30d">30 days</option>
+                <option value="60d">60 days</option>
+                <option value="90d">90 days</option>
+                <option value="180d">180 days</option>
+                <option value="270d">270 days</option>
+                <option value="1y">1 year</option>
+                <option value="3y">3 years</option>
+                <option value="forever">Forever</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowBanModal(false)}
+                className="rounded border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBan}
+                disabled={banActing}
+                className="inline-flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {banActing && <Loader2 className="h-4 w-4 animate-spin" />}
+                Confirm Ban
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Follow list modal */}
@@ -497,6 +481,175 @@ export default function UserProfilePage() {
         </div>
       )}
     </div>
+  )
+}
+
+// ── Broadcasts Section ────────────────────────────────────────────────
+
+function BroadcastsSection({
+  userId,
+  initialBroadcasts,
+  isOwnProfile,
+  isBlocked,
+  hasSession,
+}: {
+  userId: number
+  initialBroadcasts: ProfileBroadcast[]
+  isOwnProfile: boolean
+  isBlocked: boolean
+  hasSession: boolean
+}) {
+  const [broadcasts, setBroadcasts] = useState(initialBroadcasts)
+
+  useEffect(() => {
+    setBroadcasts(initialBroadcasts)
+  }, [initialBroadcasts])
+
+  const [openComments, setOpenComments] = useState<number | null>(null)
+  const [comments, setComments] = useState<Record<number, BroadcastComment[]>>({})
+  const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set())
+  const [replyText, setReplyText] = useState("")
+
+  function loadBroadcasts() {
+    fetch(`/api/users/${userId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.broadcasts) setBroadcasts(data.broadcasts)
+      })
+  }
+
+  async function handleLike(broadcastId: number) {
+    if (!hasSession) return
+    await fetch(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
+    loadBroadcasts()
+  }
+
+  async function handleDeleteBroadcast(broadcastId: number) {
+    if (!confirm("Delete this broadcast?")) return
+    const res = await fetch(`/api/broadcasts/${broadcastId}`, { method: "DELETE" })
+    if (res.ok) loadBroadcasts()
+  }
+
+  async function loadComments(broadcastId: number) {
+    const res = await fetch(`/api/broadcasts/${broadcastId}/reply`)
+    if (res.ok) {
+      const data = await res.json()
+      setComments((prev) => ({ ...prev, [broadcastId]: data }))
+    }
+  }
+
+  function toggleComments(broadcastId: number) {
+    if (openComments === broadcastId) {
+      setOpenComments(null)
+    } else {
+      setOpenComments(broadcastId)
+      loadComments(broadcastId)
+    }
+    setReplyText("")
+  }
+
+  async function handleReply(broadcastId: number) {
+    if (!hasSession || !replyText.trim()) return
+    await fetch(`/api/broadcasts/${broadcastId}/reply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: replyText.trim() }),
+    })
+    setReplyText("")
+    loadComments(broadcastId)
+    loadBroadcasts()
+  }
+
+  if (broadcasts.length === 0) {
+    return (
+      <section className="space-y-3">
+        <div className="rounded-lg border border-gray-700 bg-gray-900 p-8 text-center text-gray-500">
+          No broadcasts yet.
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-3">
+      {broadcasts.map((b) => (
+        <div
+          key={b.id}
+          className="flex items-start gap-4 rounded-lg border border-gray-700 bg-gray-900 p-4"
+        >
+          <Megaphone className="h-5 w-5 shrink-0 text-gray-600 mt-0.5" />
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span>{statusLabel(b.status)}</span>
+              {b.rating !== null && (
+                <span className="flex items-center gap-0.5 text-yellow-400">
+                  <Star className="h-3 w-3 fill-current" />
+                  {b.rating}/10
+                </span>
+              )}
+              <span>&middot; {timeAgo(b.createAt)}</span>
+            </div>
+            <Link
+              href={`/library/videogames/${b.game.slug}`}
+              className="block text-sm font-semibold text-blue-400 hover:underline"
+            >
+              {b.game.title}
+            </Link>
+            {b.content && (
+              <p className="text-sm text-gray-300 line-clamp-3">{b.content}</p>
+            )}
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <button
+                onClick={() => handleLike(b.id)}
+                className={`inline-flex items-center gap-1 hover:text-red-400 ${b.likedByMe ? "text-red-400" : ""}`}
+              >
+                <Heart className={`h-3 w-3 ${b.likedByMe ? "fill-current" : ""}`} /> {b._count.likes}
+              </button>
+              <button
+                onClick={() => toggleComments(b.id)}
+                className="inline-flex items-center gap-1 hover:text-blue-400"
+              >
+                <MessageCircle className="h-3 w-3" /> {b._count.comments}
+              </button>
+            </div>
+            {openComments === b.id && (
+              <div className="space-y-3 pt-1">
+                <CommentsSection
+                  comments={comments[b.id] || []}
+                  expanded={expandedComments.has(b.id)}
+                  onExpand={() => setExpandedComments((prev) => new Set(prev).add(b.id))}
+                />
+                {hasSession && !isBlocked && (
+                  <div className="flex gap-2">
+                    <input
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Write a reply..."
+                      className="flex-1 rounded border border-gray-600 bg-gray-800 px-3 py-1.5 text-sm text-white focus:border-blue-500 focus:outline-none"
+                    />
+                    <button
+                      onClick={() => handleReply(b.id)}
+                      className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                      Reply
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          {isOwnProfile && (
+            <button
+              onClick={() => handleDeleteBroadcast(b.id)}
+              className="shrink-0 rounded border border-red-500/40 p-2 text-red-400 hover:bg-red-500/10"
+              title="Delete broadcast"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      ))}
+    </section>
   )
 }
 

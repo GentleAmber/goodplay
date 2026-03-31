@@ -32,6 +32,7 @@ const handler = NextAuth({
           name: user.name,
           role: user.role,
           banned: user.banned,
+          bannedUntil: user.bannedUntil ? user.bannedUntil.toISOString() : null,
         }
       },
     }),
@@ -46,7 +47,21 @@ const handler = NextAuth({
         token.id = user.id
         token.role = user.role
         token.banned = user.banned
+        token.bannedUntil = user.bannedUntil
       }
+
+      // Always refresh ban status from DB so changes take effect immediately
+      const dbUser = await prisma.user.findUnique({
+        where: { id: parseInt(token.id as string, 10) },
+        select: { banned: true, bannedUntil: true },
+      })
+      if (dbUser) {
+        token.banned = dbUser.banned
+        token.bannedUntil = dbUser.bannedUntil
+          ? dbUser.bannedUntil.toISOString()
+          : null
+      }
+
       return token
     },
     async session({ session, token }) {
@@ -54,6 +69,7 @@ const handler = NextAuth({
         session.user.id = token.id
         session.user.role = token.role
         session.user.banned = token.banned
+        session.user.bannedUntil = token.bannedUntil
       }
       return session
     },

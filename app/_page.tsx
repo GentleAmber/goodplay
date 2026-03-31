@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import STATUS_CONFIG from "@/app/_types/GameStatus"
+import BanBanner from "@/app/_components/BanBanner"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -216,7 +217,10 @@ export default function Homepage() {
   // ── Logged-in dashboard ──
 
   async function handleLike(broadcastId: number) {
-    if (isBanned) return
+    if (isBanned) {
+      alert("Action not allowed. You're currently banned.")
+      return
+    }
     await fetch(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
     loadFeed()
     loadMyBroadcasts()
@@ -248,7 +252,11 @@ export default function Homepage() {
   }
 
   async function handleReply(broadcastId: number) {
-    if (isBanned || !replyText.trim()) return
+    if (isBanned) {
+      alert("Action not allowed. You're currently banned.")
+      return
+    }
+    if (!replyText.trim()) return
     await fetch(`/api/broadcasts/${broadcastId}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -267,13 +275,9 @@ export default function Homepage() {
   return (
     <div className="container mx-auto px-4 py-10">
       {/* Banned banner */}
-      {isBanned && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          Your account is restricted. You can still browse and review games,
-          but replying, liking, and requesting games is disabled.
-        </div>
-      )}
+      <div className="mb-6">
+        <BanBanner />
+      </div>
 
       <div className="flex gap-8">
         {/* ═══ Left column — Game Reviews ═══ */}
@@ -587,8 +591,7 @@ export default function Homepage() {
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <button
                         onClick={() => handleLike(b.id)}
-                        disabled={isBanned}
-                        className={`inline-flex items-center gap-1 hover:text-red-400 transition-colors ${isBanned ? "opacity-40 cursor-not-allowed" : ""} ${b.likedByMe ? "text-red-400" : ""}`}
+                        className={`inline-flex items-center gap-1 hover:text-red-400 transition-colors ${b.likedByMe ? "text-red-400" : ""}`}
                       >
                         <Heart className={`h-3 w-3 ${b.likedByMe ? "fill-current" : ""}`} />
                         {b._count.likes}
@@ -611,23 +614,21 @@ export default function Homepage() {
                           expanded={expandedComments.has(b.id)}
                           onExpand={() => setExpandedComments((prev) => new Set(prev).add(b.id))}
                         />
-                        {!isBanned && (
-                          <div className="flex gap-2">
-                            <input
-                              value={replyingTo === b.id ? replyText : ""}
-                              onFocus={() => setReplyingTo(b.id)}
-                              onChange={(e) => { setReplyingTo(b.id); setReplyText(e.target.value) }}
-                              placeholder="Write a reply..."
-                              className="flex-1 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
-                            />
-                            <button
-                              onClick={() => handleReply(b.id)}
-                              className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
-                            >
-                              Reply
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex gap-2">
+                          <input
+                            value={replyingTo === b.id ? replyText : ""}
+                            onFocus={() => setReplyingTo(b.id)}
+                            onChange={(e) => { setReplyingTo(b.id); setReplyText(e.target.value) }}
+                            placeholder="Write a reply..."
+                            className="flex-1 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+                          />
+                          <button
+                            onClick={() => handleReply(b.id)}
+                            className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+                          >
+                            Reply
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

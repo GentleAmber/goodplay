@@ -13,6 +13,8 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react"
+import { proxiedImageUrl } from "@/lib/image-proxy"
+import BanBanner from "@/app/_components/BanBanner"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -84,6 +86,7 @@ export default function GameDetailPage() {
 
   const myUserId = session?.user?.id ? parseInt(session.user.id, 10) : null
   const myReview = game?.reviews.find((r) => r.userId === myUserId) ?? null
+  const isBanned = session?.user?.banned === true
 
   useEffect(() => {
     setLoading(true)
@@ -98,6 +101,10 @@ export default function GameDetailPage() {
   }, [slug])
 
   function openReviewForm() {
+    if (isBanned) {
+      alert("Action not allowed. You're currently banned.")
+      return
+    }
     if (myReview) {
       setFormRating(myReview.rating ?? "")
       setFormStatus(myReview.status)
@@ -114,6 +121,10 @@ export default function GameDetailPage() {
   async function handleSubmitReview(e: React.FormEvent) {
     e.preventDefault()
     if (!game) return
+    if (isBanned) {
+      alert("Action not allowed. You're currently banned.")
+      return
+    }
     setSubmitting(true)
 
     const res = await fetch(`/api/games/${game.id}/review`, {
@@ -138,6 +149,10 @@ export default function GameDetailPage() {
 
   async function handleDeleteReview() {
     if (!game || !myReview) return
+    if (isBanned) {
+      alert("Action not allowed. You're currently banned.")
+      return
+    }
     if (!confirm("Delete your review? This cannot be undone.")) return
 
     const res = await fetch(`/api/games/${game.id}/review`, { method: "DELETE" })
@@ -184,6 +199,8 @@ export default function GameDetailPage() {
         <ArrowLeft className="h-4 w-4" /> Back to library
       </Link>
 
+      <BanBanner />
+
       {/* Hero section */}
       <div className="flex flex-col md:flex-row gap-8">
         {/* Cover */}
@@ -191,7 +208,7 @@ export default function GameDetailPage() {
           <div className="aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
             {game.coverImage ? (
               <img
-                src={game.coverImage}
+                src={proxiedImageUrl(game.coverImage)!}
                 alt={game.title}
                 className="h-full w-full object-cover"
               />
@@ -404,7 +421,7 @@ export default function GameDetailPage() {
                     <Link href={`/user/${review.createByUser.id}`} className="shrink-0">
                       <div className="h-8 w-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-400 overflow-hidden">
                         {review.createByUser.avatar ? (
-                          <img src={review.createByUser.avatar} alt={review.createByUser.name} className="h-full w-full rounded-full object-cover" />
+                          <img src={proxiedImageUrl(review.createByUser.avatar)!} alt={review.createByUser.name} className="h-full w-full rounded-full object-cover" />
                         ) : (
                           review.createByUser.name[0].toUpperCase()
                         )}
