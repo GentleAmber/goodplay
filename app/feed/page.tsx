@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import STATUS_CONFIG from "@/app/_types/GameStatus"
 import BanBanner from "@/app/_components/BanBanner"
+import { proxiedImageUrl } from "@/lib/image-proxy"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -174,7 +175,7 @@ export default function FeedPage() {
                     <div className="h-8 w-8 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
                       {b.createByUser.avatar ? (
                         <img
-                          src={b.createByUser.avatar}
+                          src={proxiedImageUrl(b.createByUser.avatar)!}
                           alt={b.createByUser.name}
                           className="h-full w-full object-cover"
                         />
@@ -249,7 +250,7 @@ export default function FeedPage() {
                           <Link href={`/user/${c.createByUser.id}`} className="shrink-0">
                             <div className="h-5 w-5 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
                               {c.createByUser.avatar ? (
-                                <img src={c.createByUser.avatar} alt={c.createByUser.name} className="h-full w-full object-cover" />
+                                <img src={proxiedImageUrl(c.createByUser.avatar)!} alt={c.createByUser.name} className="h-full w-full object-cover" />
                               ) : (
                                 <div className="flex h-full w-full items-center justify-center text-[8px] font-bold text-gray-400">
                                   {c.createByUser.name[0].toUpperCase()}

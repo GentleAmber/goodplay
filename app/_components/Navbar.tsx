@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useSession, signIn, signOut } from "next-auth/react"
 import { useRef, useState, useEffect } from "react"
 import { Role } from "@/generated/prisma"
+import { proxiedImageUrl } from "@/lib/image-proxy"
 
 export default function Component() {
   
@@ -31,7 +32,6 @@ export default function Component() {
         .then((data) => {
           if (data.name) setAvatar(data.avatar)
         })
-      console.log(avatar)
     }
   }, [session])
 
@@ -47,7 +47,7 @@ export default function Component() {
               <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-gray-600 bg-gray-800">
                 {avatar ? 
                 <img
-                    src={avatar || ""}
+                    src={proxiedImageUrl(avatar) || ""}
                     alt={session.user.name || ""}
                     className="h-full w-full object-cover"
                   /> :

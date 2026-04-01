@@ -9,7 +9,11 @@ import {
   Star,
   SlidersHorizontal,
   X,
+  Trash2,
 } from "lucide-react"
+import { proxiedImageUrl } from "@/lib/image-proxy"
+import { useSession } from "next-auth/react"
+import { Role } from "@/generated/prisma"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -37,6 +41,9 @@ interface SearchResult {
 export default function VideogamesLibrary() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { data: session } = useSession()
+
+  const isAdmin = session?.user?.role === Role.ADMIN
 
   // Read initial values from URL
   const [q, setQ] = useState(searchParams.get("q") || "")
@@ -50,6 +57,10 @@ export default function VideogamesLibrary() {
 
   const [data, setData] = useState<SearchResult | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Admin batch-delete state
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
 
   const fetchGames = useCallback(() => {
     setLoading(true)
@@ -78,6 +89,28 @@ export default function VideogamesLibrary() {
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     setPage(1)
+  }
+
+  async function handleBatchDelete() {
+    if (selected.size === 0) return
+    if (!confirm(`Delete ${selected.size} game(s)? This will remove all their reviews and broadcasts and cannot be undone.`)) return
+    setDeleting(true)
+    await fetch("/api/games", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: Array.from(selected) }),
+    })
+    setSelected(new Set())
+    setDeleting(false)
+    fetchGames()
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
   }
 
   function clearFilters() {
@@ -206,27 +239,57 @@ export default function VideogamesLibrary() {
         </div>
       ) : (
         <>
+          {/* Admin batch-delete toolbar */}
+          {isAdmin && selected.size > 0 && (
+            <div className="flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2.5">
+              <span className="text-sm text-red-300">{selected.size} selected</span>
+              <button
+                onClick={handleBatchDelete}
+                disabled={deleting}
+                className="inline-flex items-center gap-1.5 rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {deleting ? "Deleting…" : "Delete selected"}
+              </button>
+              <button
+                onClick={() => setSelected(new Set())}
+                className="text-sm text-gray-400 hover:text-white"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5">
             {data.games.map((game) => (
-              <Link
-                key={game.id}
-                href={`/library/videogames/${game.slug}`}
-                className="group space-y-2"
-              >
-                {/* Cover */}
-                <div className="aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
-                  {game.coverImage ? (
-                    <img
-                      src={game.coverImage}
-                      alt={game.title}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-gray-600 text-xs">
-                      No image
-                    </div>
-                  )}
-                </div>
+              <div key={game.id} className="group relative space-y-2">
+                {/* Admin checkbox */}
+                {isAdmin && (
+                  <input
+                    type="checkbox"
+                    checked={selected.has(game.id)}
+                    onChange={() => toggleSelect(game.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute left-2 top-2 z-10 h-4 w-4 cursor-pointer rounded border-gray-500 accent-red-500"
+                  />
+                )}
+
+                <Link href={`/library/videogames/${game.slug}`} className="block">
+                  {/* Cover */}
+                  <div className={`aspect-[3/4] overflow-hidden rounded-lg border bg-gray-800 transition-colors ${selected.has(game.id) ? "border-red-500" : "border-gray-700"}`}>
+                    {game.coverImage ? (
+                      <img
+                        src={proxiedImageUrl(game.coverImage)!}
+                        alt={game.title}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-gray-600 text-xs">
+                        No image
+                      </div>
+                    )}
+                  </div>
+                </Link>
 
                 {/* Info */}
                 <div>
@@ -250,7 +313,7 @@ export default function VideogamesLibrary() {
                     </p>
                   )}
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
 

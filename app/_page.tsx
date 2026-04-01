@@ -19,6 +19,7 @@ import {
 import Link from "next/link"
 import STATUS_CONFIG from "@/app/_types/GameStatus"
 import BanBanner from "@/app/_components/BanBanner"
+import { proxiedImageUrl } from "@/lib/image-proxy"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -279,7 +280,7 @@ export default function Homepage() {
         <BanBanner />
       </div>
 
-      <div className="flex gap-8">
+      <div className="flex flex-col lg:flex-row gap-8">
         {/* ═══ Left column — Game Reviews ═══ */}
         <div className="flex-1 min-w-0 space-y-8">
           {/* Action buttons */}
@@ -344,7 +345,7 @@ export default function Homepage() {
                     No games yet
                   </p>
                 ) : (
-                  <div className="grid grid-cols-5 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
                     {games.map((r) => (
                       <Link
                         key={r.game.id}
@@ -354,7 +355,7 @@ export default function Homepage() {
                       >
                         {r.game.coverImage ? (
                           <img
-                            src={r.game.coverImage}
+                            src={proxiedImageUrl(r.game.coverImage)!}
                             alt={r.game.title}
                             className="h-full w-full object-cover transition-transform group-hover:scale-105"
                           />
@@ -375,14 +376,14 @@ export default function Homepage() {
         </div>
 
         {/* ═══ Right column — Social ═══ */}
-        <div className="w-80 shrink-0 space-y-6">
+        <div className="w-full lg:w-80 lg:shrink-0 space-y-6">
           {/* Profile card */}
           <div className="rounded-lg border border-gray-700 bg-gray-900 p-5">
             <div className="flex items-center gap-3">
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-gray-600 bg-gray-800">
                 {(profile?.avatar || session.user.image) ? (
                   <img
-                    src={profile?.avatar || session.user.image || ""}
+                    src={proxiedImageUrl(profile?.avatar || session.user.image)!}
                     alt={session.user.name || ""}
                     className="h-full w-full object-cover"
                   />
@@ -541,7 +542,7 @@ export default function Homepage() {
                         <div className="h-6 w-6 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
                           {b.createByUser.avatar ? (
                             <img
-                              src={b.createByUser.avatar}
+                              src={proxiedImageUrl(b.createByUser.avatar)!}
                               alt={b.createByUser.name}
                               className="h-full w-full object-cover"
                             />
@@ -665,7 +666,7 @@ export default function Homepage() {
                   >
                     <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
                       {u.avatar ? (
-                        <img src={u.avatar} alt={u.name} className="h-full w-full object-cover" />
+                        <img src={proxiedImageUrl(u.avatar)!} alt={u.name} className="h-full w-full object-cover" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-xs font-bold text-gray-400">
                           {u.name[0].toUpperCase()}
@@ -711,7 +712,7 @@ function CommentsSection({
           <Link href={`/user/${c.createByUser.id}`} className="shrink-0">
             <div className="h-5 w-5 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
               {c.createByUser.avatar ? (
-                <img src={c.createByUser.avatar} alt={c.createByUser.name} className="h-full w-full object-cover" />
+                <img src={proxiedImageUrl(c.createByUser.avatar)!} alt={c.createByUser.name} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[8px] font-bold text-gray-400">
                   {c.createByUser.name[0].toUpperCase()}

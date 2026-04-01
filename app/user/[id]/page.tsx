@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { Role } from "@/generated/prisma"
 import STATUS_CONFIG from "@/app/_types/GameStatus"
+import { proxiedImageUrl } from "@/lib/image-proxy"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -206,7 +207,7 @@ export default function UserProfilePage() {
       <section className="flex flex-col sm:flex-row gap-6 items-start">
         <div className="h-20 w-20 shrink-0 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-2xl font-bold text-gray-400">
           {profile.avatar ? (
-            <img src={profile.avatar} alt={profile.name} className="h-full w-full rounded-full object-cover" />
+            <img src={proxiedImageUrl(profile.avatar)!} alt={profile.name} className="h-full w-full rounded-full object-cover" />
           ) : (
             profile.name[0].toUpperCase()
           )}
@@ -352,7 +353,7 @@ export default function UserProfilePage() {
                 <Link href={`/library/videogames/${review.game.slug}`} className="shrink-0">
                   <div className="h-20 w-14 overflow-hidden rounded border border-gray-700 bg-gray-800">
                     {review.game.coverImage ? (
-                      <img src={review.game.coverImage} alt={review.game.title} className="h-full w-full object-cover" />
+                      <img src={proxiedImageUrl(review.game.coverImage)!} alt={review.game.title} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-[10px] text-gray-600">N/A</div>
                     )}
@@ -467,7 +468,7 @@ export default function UserProfilePage() {
                   >
                     <div className="h-8 w-8 shrink-0 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-400">
                       {u.avatar ? (
-                        <img src={u.avatar} alt={u.name} className="h-full w-full rounded-full object-cover" />
+                        <img src={proxiedImageUrl(u.avatar)!} alt={u.name} className="h-full w-full rounded-full object-cover" />
                       ) : (
                         u.name[0].toUpperCase()
                       )}
@@ -678,7 +679,7 @@ function CommentsSection({
           <Link href={`/user/${c.createByUser.id}`} className="shrink-0">
             <div className="h-6 w-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-400 overflow-hidden">
               {c.createByUser.avatar ? (
-                <img src={c.createByUser.avatar} alt={c.createByUser.name} className="h-full w-full rounded-full object-cover" />
+                <img src={proxiedImageUrl(c.createByUser.avatar)!} alt={c.createByUser.name} className="h-full w-full rounded-full object-cover" />
               ) : (
                 c.createByUser.name[0].toUpperCase()
               )}

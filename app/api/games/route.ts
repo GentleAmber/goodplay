@@ -175,3 +175,33 @@ export async function POST(req: Request) {
 
   return NextResponse.json(game, { status: 201 })
 }
+
+export async function DELETE(req: Request) {
+  const user = await getAuthUser()
+  if (!user || user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const body = await req.json()
+  const ids: unknown = body?.ids
+  if (!Array.isArray(ids) || ids.length === 0 || ids.some((id) => typeof id !== "string")) {
+    return NextResponse.json({ error: "ids must be a non-empty array of strings" }, { status: 400 })
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const broadcastIds = (
+      await tx.broadcast.findMany({ where: { gameId: { in: ids } }, select: { id: true } })
+    ).map((b) => b.id)
+
+    if (broadcastIds.length > 0) {
+      await tx.broadcastLike.deleteMany({ where: { broadcastId: { in: broadcastIds } } })
+      await tx.broadcastComment.deleteMany({ where: { broadcastId: { in: broadcastIds } } })
+      await tx.broadcast.deleteMany({ where: { id: { in: broadcastIds } } })
+    }
+
+    await tx.gameReview.deleteMany({ where: { gameId: { in: ids } } })
+    await tx.game.deleteMany({ where: { id: { in: ids } } })
+  })
+
+  return new NextResponse(null, { status: 204 })
+}

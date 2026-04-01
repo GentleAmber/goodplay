@@ -184,7 +184,7 @@ function InvitationCodesTab() {
   return (
     <div className="space-y-6">
       {/* Create new code */}
-      <div className="flex items-end gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-300 mb-1">
             New Invitation Code
@@ -197,115 +197,104 @@ function InvitationCodesTab() {
             className="w-full rounded border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Register as
-          </label>
-          <select
-            value={newCodeAsAdmin ? "admin" : "user"}
-            onChange={(e) => setNewCodeAsAdmin(e.target.value === "admin")}
-            className="rounded border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
-          >
-            {REGISTER_AS_OPTIONS.map((o) => (
-              <option key={o.label} value={o.value ? "admin" : "user"}>{o.label}</option>
-            ))}
-          </select>
+        <div className="flex gap-3 sm:contents">
+          <div className="flex-1 sm:flex-none">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Register as
+            </label>
+            <select
+              value={newCodeAsAdmin ? "admin" : "user"}
+              onChange={(e) => setNewCodeAsAdmin(e.target.value === "admin")}
+              className="w-full rounded border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
+            >
+              {REGISTER_AS_OPTIONS.map((o) => (
+                <option key={o.label} value={o.value ? "admin" : "user"}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={handleCreate}
+              disabled={creating}
+              className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              Create
+            </button>
+          </div>
         </div>
-        <button
-          onClick={handleCreate}
-          disabled={creating}
-          className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-          Create
-        </button>
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       {/* Codes list */}
-      <div className="rounded-lg border border-gray-700 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-800 text-gray-400">
-            <tr>
-              <th className="px-4 py-2 text-left font-medium">Code</th>
-              <th className="px-4 py-2 text-left font-medium">Created At</th>
-              <th className="px-4 py-2 text-left font-medium">Created By</th>
-              <th className="px-4 py-2 text-center font-medium">Register As</th>
-              <th className="px-4 py-2 text-center font-medium">Uses</th>
-              <th className="px-4 py-2 text-center font-medium">Status</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {codes.map((c) => (
-              <tr key={c.id} className="hover:bg-gray-800/50">
-                <td className="px-4 py-2 font-mono text-gray-300">{c.code}</td>
-                <td className="px-4 py-2 text-gray-500">
-                  {new Date(c.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-2">
-                  {c.createdBy != "System" ? (
-                    <span className="text-gray-500">{c.createdBy}</span>
-                  ) : (
+      {codes.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">No invitation codes.</p>
+      ) : (
+        <div className="space-y-3">
+          {codes.map((c) => (
+            <div key={c.id} className="rounded-lg border border-gray-700 bg-gray-900 p-4 space-y-3">
+              {/* Code + actions row */}
+              <div className="flex items-start justify-between gap-3">
+                <span className="font-mono text-gray-200 text-sm break-all">{c.code}</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    onClick={() => copyCode(c)}
+                    className="text-gray-500 hover:text-white"
+                    title="Copy code"
+                  >
+                    {copiedId === c.id ? (
+                      <Check className="h-4 w-4 text-green-400" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (c.createdBy === "System") {
+                        alert("This code was created by System and cannot be modified.")
+                        return
+                      }
+                      handleDisable(c.id)
+                    }}
+                    disabled={disabling === c.id}
+                    className={`${c.isValid ? "text-gray-500 hover:text-red-400" : "text-gray-500 hover:text-green-400"}`}
+                    title={c.isValid ? "Disable code" : "Enable code"}
+                  >
+                    {disabling === c.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : c.isValid ? (
+                      <X className="h-4 w-4" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              {/* Meta row */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                <span>
+                  By{" "}
+                  {c.createdBy === "System" ? (
                     <span className="text-amber-400 font-medium">System</span>
-                  )}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  <span className={`text-xs ${c.registerAsAdmin ? "text-yellow-400" : "text-gray-500"}`}>
-                    {c.registerAsAdmin ? "Admin" : "User"}
-                  </span>
-                </td>
-                <td className="px-4 py-2 text-center text-gray-300">{c._count.users}</td>
-                <td className="px-4 py-2 text-center">
-                  {c.isValid ? (
-                    <span className="text-green-400 text-xs">Active</span>
                   ) : (
-                    <span className="text-red-400 text-xs">Disabled</span>
+                    c.createdBy
                   )}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => copyCode(c)}
-                      className="text-gray-500 hover:text-white"
-                      title="Copy code"
-                    >
-                      {copiedId === c.id ? (
-                        <Check className="h-4 w-4 text-green-400" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (c.createdBy === "System") {
-                          alert("This code was created by System and cannot be modified.")
-                          return
-                        }
-                        handleDisable(c.id)
-                      }}
-                      disabled={disabling === c.id}
-                      className={`${c.isValid ? "text-gray-500 hover:text-red-400" : "text-gray-500 hover:text-green-400"}`}
-                      title={c.isValid ? "Disable code" : "Enable code"}
-                    >
-                      {disabling === c.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : c.isValid ? (
-                        <X className="h-4 w-4" />
-                      ) : (
-                        <Check className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {codes.length === 0 && (
-          <p className="text-center text-gray-500 py-8">No invitation codes.</p>
-        )}
-      </div>
+                </span>
+                <span className={c.registerAsAdmin ? "text-yellow-400" : ""}>
+                  {c.registerAsAdmin ? "Admin code" : "User code"}
+                </span>
+                <span>{c._count.users} use{c._count.users !== 1 ? "s" : ""}</span>
+                {c.isValid ? (
+                  <span className="text-green-400">Active</span>
+                ) : (
+                  <span className="text-red-400">Disabled</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -352,39 +341,41 @@ function GameRequestsTab() {
       {games.map((game) => (
         <div
           key={game.id}
-          className="flex items-center gap-4 rounded-lg border border-gray-700 bg-gray-900 p-4"
+          className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-gray-700 bg-gray-900 p-4"
         >
-          <div className="h-16 w-12 shrink-0 overflow-hidden rounded border border-gray-700 bg-gray-800">
-            {game.coverImage ? (
-              <img src={game.coverImage} alt={game.title} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full items-center justify-center text-[10px] text-gray-600">N/A</div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-200 line-clamp-1">{game.title}</h3>
-            <div className="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
-              <span>{game.gameType.replace("_", " ")}</span>
-              {game.releaseDate && (
-                <span>&middot; {new Date(game.releaseDate).toLocaleDateString()}</span>
-              )}
-              {game.genres.length > 0 && (
-                <span>&middot; {game.genres.join(", ")}</span>
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="h-16 w-12 shrink-0 overflow-hidden rounded border border-gray-700 bg-gray-800">
+              {game.coverImage ? (
+                <img src={game.coverImage} alt={game.title} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-[10px] text-gray-600">N/A</div>
               )}
             </div>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-gray-200 line-clamp-1">{game.title}</h3>
+              <div className="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
+                <span>{game.gameType.replace("_", " ")}</span>
+                {game.releaseDate && (
+                  <span>&middot; {new Date(game.releaseDate).toLocaleDateString()}</span>
+                )}
+                {game.genres.length > 0 && (
+                  <span>&middot; {game.genres.join(", ")}</span>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 sm:shrink-0">
             <button
               onClick={() => handleAction(game.id, "APPROVED")}
               disabled={acting === game.id}
-              className="inline-flex items-center gap-1 rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
             >
               <Check className="h-4 w-4" /> Approve
             </button>
             <button
               onClick={() => handleAction(game.id, "REJECTED")}
               disabled={acting === game.id}
-              className="inline-flex items-center gap-1 rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
             >
               <X className="h-4 w-4" /> Reject
             </button>
@@ -470,77 +461,63 @@ function UsersTab() {
       ) : users.length === 0 ? (
         <p className="text-center text-gray-500 py-8">No users found.</p>
       ) : (
-        <div className="rounded-lg border border-gray-700 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-800 text-gray-400">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium">User</th>
-                <th className="px-4 py-2 text-left font-medium">Role</th>
-                <th className="px-4 py-2 text-left font-medium">Status</th>
-                <th className="px-4 py-2 text-left font-medium">Ban Expires</th>
-                <th className="px-4 py-2 text-right font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {users.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-800/50">
-                  <td className="px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 shrink-0 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-400 overflow-hidden">
-                        {u.avatar ? (
-                          <img src={u.avatar} alt={u.name} className="h-full w-full rounded-full object-cover" />
-                        ) : (
-                          u.name[0].toUpperCase()
-                        )}
-                      </div>
-                      <span className="text-gray-300 font-medium">{u.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-2">
-                    <span className={`text-xs ${u.role === "ADMIN" ? "text-yellow-400" : "text-gray-500"}`}>
-                      {u.role}
+        <div className="space-y-3">
+          {users.map((u) => (
+            <div key={u.id} className="flex items-center gap-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
+              {/* Avatar */}
+              <div className="h-9 w-9 shrink-0 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-sm font-bold text-gray-400 overflow-hidden">
+                {u.avatar ? (
+                  <img src={u.avatar} alt={u.name} className="h-full w-full rounded-full object-cover" />
+                ) : (
+                  u.name[0].toUpperCase()
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-gray-200 font-medium text-sm">{u.name}</span>
+                  <span className={`text-xs ${u.role === "ADMIN" ? "text-yellow-400" : "text-gray-500"}`}>
+                    {u.role}
+                  </span>
+                  {u.banned ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-red-400">
+                      <ShieldAlert className="h-3 w-3" /> Banned
                     </span>
-                  </td>
-                  <td className="px-4 py-2">
-                    {u.banned ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-red-400">
-                        <ShieldAlert className="h-3 w-3" /> Banned
-                      </span>
-                    ) : (
-                      <span className="text-xs text-green-400">Active</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-xs text-gray-500">
-                    {u.banned
-                      ? u.bannedUntil
-                        ? new Date(u.bannedUntil).toLocaleDateString()
-                        : "Never"
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    {u.role !== "ADMIN" && (
-                      u.banned ? (
-                        <button
-                          onClick={() => handleUnban(u.id)}
-                          disabled={acting}
-                          className="inline-flex items-center gap-1 rounded border border-green-500/40 px-2 py-1 text-xs text-green-400 hover:bg-green-500/10 disabled:opacity-50"
-                        >
-                          <ShieldOff className="h-3 w-3" /> Unban
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => { setBanTarget(u); setBanDuration("7d") }}
-                          className="inline-flex items-center gap-1 rounded border border-red-500/40 px-2 py-1 text-xs text-red-400 hover:bg-red-500/10"
-                        >
-                          <ShieldAlert className="h-3 w-3" /> Ban
-                        </button>
-                      )
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  ) : (
+                    <span className="text-xs text-green-400">Active</span>
+                  )}
+                </div>
+                {u.banned && (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Expires: {u.bannedUntil ? 
+                    `${new Date(u.bannedUntil).toLocaleDateString()}  ${new Date(u.bannedUntil).toLocaleTimeString()}` 
+                    : "Never"}
+                  </p>
+                )}
+              </div>
+
+              {/* Action */}
+              {u.role !== "ADMIN" && (
+                u.banned ? (
+                  <button
+                    onClick={() => handleUnban(u.id)}
+                    disabled={acting}
+                    className="shrink-0 inline-flex items-center gap-1 rounded border border-green-500/40 px-3 py-1.5 text-sm text-green-400 hover:bg-green-500/10 disabled:opacity-50"
+                  >
+                    <ShieldOff className="h-4 w-4" /> Unban
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setBanTarget(u); setBanDuration("7d") }}
+                    className="shrink-0 inline-flex items-center gap-1 rounded border border-red-500/40 px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10"
+                  >
+                    <ShieldAlert className="h-4 w-4" /> Ban
+                  </button>
+                )
+              )}
+            </div>
+          ))}
         </div>
       )}
 

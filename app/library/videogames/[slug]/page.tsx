@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Star,
@@ -12,9 +12,11 @@ import {
   ArrowLeft,
   Pencil,
   Trash2,
+  ShieldAlert,
 } from "lucide-react"
 import { proxiedImageUrl } from "@/lib/image-proxy"
 import BanBanner from "@/app/_components/BanBanner"
+import { Role } from "@/generated/prisma"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -84,9 +86,12 @@ export default function GameDetailPage() {
   const [formBroadcast, setFormBroadcast] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  const router = useRouter()
+
   const myUserId = session?.user?.id ? parseInt(session.user.id, 10) : null
   const myReview = game?.reviews.find((r) => r.userId === myUserId) ?? null
   const isBanned = session?.user?.banned === true
+  const isAdmin = session?.user?.role === Role.ADMIN
 
   useEffect(() => {
     setLoading(true)
@@ -161,6 +166,13 @@ export default function GameDetailPage() {
       const updated = await fetch(`/api/games/${slug}`).then((r) => r.json())
       setGame(updated)
     }
+  }
+
+  async function handleDeleteGame() {
+    if (!game) return
+    if (!confirm(`Delete "${game.title}"? This will remove all reviews and broadcasts and cannot be undone.`)) return
+    const res = await fetch(`/api/games/${game.id}`, { method: "DELETE" })
+    if (res.ok) router.push("/library/videogames")
   }
 
   // ── Loading / Error ──
@@ -278,6 +290,19 @@ export default function GameDetailPage() {
             </p>
           )}
 
+          {/* Admin delete */}
+          {isAdmin && (
+            <div>
+              <button
+                onClick={handleDeleteGame}
+                className="inline-flex items-center gap-2 rounded border border-red-500/40 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
+              >
+                <ShieldAlert className="h-4 w-4" />
+                Delete Game
+              </button>
+            </div>
+          )}
+
           {/* Review actions */}
           {session && (
             <div className="flex items-center gap-3">
@@ -294,7 +319,7 @@ export default function GameDetailPage() {
                   className="inline-flex items-center gap-2 rounded border border-red-500/40 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
                 >
                   <Trash2 className="h-4 w-4" />
-                  Delete
+                  Delete Your Review
                 </button>
               )}
             </div>
