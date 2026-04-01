@@ -20,6 +20,7 @@ import Link from "next/link"
 import STATUS_CONFIG from "@/app/_types/GameStatus"
 import BanBanner from "@/app/_components/BanBanner"
 import { proxiedImageUrl } from "@/lib/image-proxy"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -222,14 +223,14 @@ export default function Homepage() {
       alert("Action not allowed. You're currently banned.")
       return
     }
-    await fetch(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
+    await fetchWithLimit(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
     loadFeed()
     loadMyBroadcasts()
   }
 
   async function handleDeleteBroadcast(broadcastId: number) {
     if (!confirm("Delete this broadcast? This cannot be undone.")) return
-    const res = await fetch(`/api/broadcasts/${broadcastId}`, { method: "DELETE" })
+    const res = await fetchWithLimit(`/api/broadcasts/${broadcastId}`, { method: "DELETE" })
     if (res.ok) loadMyBroadcasts()
   }
 
@@ -258,7 +259,7 @@ export default function Homepage() {
       return
     }
     if (!replyText.trim()) return
-    await fetch(`/api/broadcasts/${broadcastId}/reply`, {
+    await fetchWithLimit(`/api/broadcasts/${broadcastId}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: replyText.trim() }),

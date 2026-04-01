@@ -14,6 +14,7 @@ import {
   X,
   Trash2,
 } from "lucide-react"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -102,7 +103,7 @@ export default function ReviewsPage() {
     if (!editing) return
     setSubmitting(true)
 
-    const res = await fetch(`/api/games/${editing.gameId}/review`, {
+    const res = await fetchWithLimit(`/api/games/${editing.gameId}/review`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -125,7 +126,7 @@ export default function ReviewsPage() {
 
   async function handleDelete(gameId: string) {
     if (!confirm("Delete this review? This cannot be undone.")) return
-    const res = await fetch(`/api/games/${gameId}/review`, { method: "DELETE" })
+    const res = await fetchWithLimit(`/api/games/${gameId}/review`, { method: "DELETE" })
     if (res.ok) {
       setEditing(null)
       const params = currentStatus ? `?status=${currentStatus}` : ""

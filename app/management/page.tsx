@@ -14,6 +14,7 @@ import {
   Copy,
   Loader2,
 } from "lucide-react"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -146,7 +147,7 @@ function InvitationCodesTab() {
   async function handleCreate() {
     setCreating(true)
     setError("")
-    const res = await fetch("/api/management/invitation-codes", {
+    const res = await fetchWithLimit("/api/management/invitation-codes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: newCode || undefined, registerAsAdmin: newCodeAsAdmin }),
@@ -170,7 +171,7 @@ function InvitationCodesTab() {
 
   async function handleDisable(codeId: number) {
     setDisabling(codeId)
-    const res = await fetch("/api/management/invitation-codes", {
+    const res = await fetchWithLimit("/api/management/invitation-codes", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ codeId }),
@@ -317,7 +318,7 @@ function GameRequestsTab() {
 
   async function handleAction(gameId: string, action: "APPROVED" | "REJECTED") {
     setActing(gameId)
-    const res = await fetch("/api/management/game-requests", {
+    const res = await fetchWithLimit("/api/management/game-requests", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ gameId, action }),
@@ -414,7 +415,7 @@ function UsersTab() {
   async function handleBan() {
     if (!banTarget) return
     setActing(true)
-    const res = await fetch("/api/management/ban", {
+    const res = await fetchWithLimit("/api/management/ban", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: banTarget.id, duration: banDuration }),
@@ -428,7 +429,7 @@ function UsersTab() {
 
   async function handleUnban(userId: number) {
     setActing(true)
-    const res = await fetch(`/api/management/ban?userId=${userId}`, { method: "DELETE" })
+    const res = await fetchWithLimit(`/api/management/ban?userId=${userId}`, { method: "DELETE" })
     if (res.ok) loadUsers(search)
     setActing(false)
   }

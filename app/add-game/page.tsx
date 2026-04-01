@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, PlusCircle } from "lucide-react"
 import { Role } from "@/generated/prisma"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 export default function AddGamePage() {
   const { data: session, status: authStatus } = useSession()
@@ -46,7 +47,7 @@ export default function AddGamePage() {
     setSuccess("")
     setSubmitting(true)
 
-    const res = await fetch("/api/games", {
+    const res = await fetchWithLimit("/api/games", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

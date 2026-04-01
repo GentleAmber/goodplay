@@ -14,6 +14,7 @@ import {
 import STATUS_CONFIG from "@/app/_types/GameStatus"
 import BanBanner from "@/app/_components/BanBanner"
 import { proxiedImageUrl } from "@/lib/image-proxy"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -94,7 +95,7 @@ export default function FeedPage() {
       alert("Action not allowed. You're currently banned.")
       return
     }
-    await fetch(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
+    await fetchWithLimit(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
     loadFeed()
   }
 
@@ -123,7 +124,7 @@ export default function FeedPage() {
       return
     }
     if (!replyText.trim()) return
-    await fetch(`/api/broadcasts/${broadcastId}/reply`, {
+    await fetchWithLimit(`/api/broadcasts/${broadcastId}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: replyText.trim() }),

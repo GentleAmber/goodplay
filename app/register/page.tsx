@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -86,7 +87,7 @@ export default function RegisterPage() {
       return
     }
 
-    const res = await fetch("/api/register", {
+    const res = await fetchWithLimit("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, password, invitationCode }),

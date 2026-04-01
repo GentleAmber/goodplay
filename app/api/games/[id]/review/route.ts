@@ -1,8 +1,7 @@
 import getAuthUser from "@/lib/auth-helper"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-
-const MAX_BROADCASTS_PER_USER = 300
+import { checkDemoLimit } from "@/lib/demo-limits"
 
 export async function POST(
   req: Request,
@@ -36,6 +35,16 @@ export async function POST(
     }
   }
 
+  // Check GameReview limit only when creating (not updating an existing review)
+  const existingReview = await prisma.gameReview.findUnique({
+    where: { gameId_userId: { gameId, userId: user.id } },
+    select: { gameId: true },
+  })
+  if (!existingReview) {
+    const limitErr = await checkDemoLimit("GameReview")
+    if (limitErr) return NextResponse.json(limitErr, { status: 403 })
+  }
+
   // Upsert: create if not exists, update if exists
   const review = await prisma.gameReview.upsert({
     where: {
@@ -57,8 +66,8 @@ export async function POST(
 
   // Optionally create a broadcast
   if (broadcast) {
-    const count = await prisma.broadcast.count({ where: { userId: user.id } })
-    if (count < MAX_BROADCASTS_PER_USER) {
+    const broadcastLimitErr = await checkDemoLimit("Broadcast")
+    if (!broadcastLimitErr) {
       await prisma.broadcast.create({
         data: {
           gameId,

@@ -1,6 +1,7 @@
 import getAuthUser from "@/lib/auth-helper"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { checkDemoLimit } from "@/lib/demo-limits"
 
 export async function POST(
   _req: Request,
@@ -44,6 +45,9 @@ export async function POST(
     await prisma.broadcastLike.delete({ where: { id: existing.id } })
     return NextResponse.json({ liked: false })
   }
+
+  const limitErr = await checkDemoLimit("BroadcastLike")
+  if (limitErr) return NextResponse.json(limitErr, { status: 403 })
 
   await prisma.broadcastLike.create({
     data: { broadcastId, userId: user.id, like: 1 },

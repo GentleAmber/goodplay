@@ -14,6 +14,7 @@ import {
 import { proxiedImageUrl } from "@/lib/image-proxy"
 import { useSession } from "next-auth/react"
 import { Role } from "@/generated/prisma"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -95,7 +96,7 @@ export default function VideogamesLibrary() {
     if (selected.size === 0) return
     if (!confirm(`Delete ${selected.size} game(s)? This will remove all their reviews and broadcasts and cannot be undone.`)) return
     setDeleting(true)
-    await fetch("/api/games", {
+    await fetchWithLimit("/api/games", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: Array.from(selected) }),

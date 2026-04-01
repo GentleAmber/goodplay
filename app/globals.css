@@ -20,7 +20,7 @@
 }
 
 html {
-  font-size: 17px;
+  font-size: 19px;
 }
 
 body {
@@ -32,3 +32,36 @@ body {
 .hidden {
   display: none;
 }
+
+.text-gray-400  { color: #ededed; }
+
+/* ── Light mode overrides ───────────────────────────────────────────── */
+
+[data-theme="light"] {
+  --background: #f3f4f6;
+  --foreground: #111827;
+}
+
+[data-theme="light"] body {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* Tailwind gray-* overrides for light mode */
+[data-theme="light"] .bg-gray-900  { background-color: #ffffff !important; }
+[data-theme="light"] .bg-gray-800  { background-color: #f9fafb !important; }
+[data-theme="light"] .bg-gray-700  { background-color: #e5e7eb !important; }
+[data-theme="light"] .border-gray-700 { border-color: #d1d5db !important; }
+[data-theme="light"] .border-gray-600 { border-color: #9ca3af !important; }
+[data-theme="light"] .text-gray-100 { color: #1f2937 !important; }
+[data-theme="light"] .text-gray-400  { color: #4b5563 !important; }
+[data-theme="light"] .text-gray-500  { color: #6b7280 !important; }
+[data-theme="light"] .text-gray-600  { color: #9ca3af !important; }
+[data-theme="light"] .text-gray-300  { color: #1f2937 !important; }
+[data-theme="light"] .text-gray-200  { color: #111827 !important; }
+[data-theme="light"] .text-white     { color: #111827 !important; }
+[data-theme="light"] .bg-blue-600.text-white {
+  color: #f3f4f6 !important;
+}
+[data-theme="light"] .hover\:bg-gray-800:hover { background-color: #e5e7eb !important; }
+[data-theme="light"] .placeholder-gray-500::placeholder { color: #9ca3af !important; }

@@ -17,6 +17,7 @@ import {
 import { proxiedImageUrl } from "@/lib/image-proxy"
 import BanBanner from "@/app/_components/BanBanner"
 import { Role } from "@/generated/prisma"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -132,7 +133,7 @@ export default function GameDetailPage() {
     }
     setSubmitting(true)
 
-    const res = await fetch(`/api/games/${game.id}/review`, {
+    const res = await fetchWithLimit(`/api/games/${game.id}/review`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -160,7 +161,7 @@ export default function GameDetailPage() {
     }
     if (!confirm("Delete your review? This cannot be undone.")) return
 
-    const res = await fetch(`/api/games/${game.id}/review`, { method: "DELETE" })
+    const res = await fetchWithLimit(`/api/games/${game.id}/review`, { method: "DELETE" })
     if (res.ok) {
       setShowForm(false)
       const updated = await fetch(`/api/games/${slug}`).then((r) => r.json())
@@ -171,7 +172,7 @@ export default function GameDetailPage() {
   async function handleDeleteGame() {
     if (!game) return
     if (!confirm(`Delete "${game.title}"? This will remove all reviews and broadcasts and cannot be undone.`)) return
-    const res = await fetch(`/api/games/${game.id}`, { method: "DELETE" })
+    const res = await fetchWithLimit(`/api/games/${game.id}`, { method: "DELETE" })
     if (res.ok) router.push("/library/videogames")
   }
 
@@ -289,6 +290,14 @@ export default function GameDetailPage() {
               {game.description}
             </p>
           )}
+
+          {/* Data source */}
+          <p className="text-sm text-gray-600">
+            Game data sourced from{" "}
+            <a href="https://rawg.io" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-300 underline">
+              rawg.io
+            </a>
+          </p>
 
           {/* Admin delete */}
           {isAdmin && (

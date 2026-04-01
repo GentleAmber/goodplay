@@ -12,6 +12,7 @@ import {
   Megaphone,
 } from "lucide-react"
 import STATUS_CONFIG from "@/app/_types/GameStatus"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -85,13 +86,13 @@ export default function BroadcastsPage() {
   }
 
   async function handleLike(broadcastId: number) {
-    await fetch(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
+    await fetchWithLimit(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
     loadBroadcasts()
   }
 
   async function handleDelete(broadcastId: number) {
     if (!confirm("Delete this broadcast? This cannot be undone.")) return
-    const res = await fetch(`/api/broadcasts/${broadcastId}`, { method: "DELETE" })
+    const res = await fetchWithLimit(`/api/broadcasts/${broadcastId}`, { method: "DELETE" })
     if (res.ok) loadBroadcasts()
   }
 
@@ -116,7 +117,7 @@ export default function BroadcastsPage() {
 
   async function handleReply(broadcastId: number) {
     if (!replyText.trim()) return
-    await fetch(`/api/broadcasts/${broadcastId}/reply`, {
+    await fetchWithLimit(`/api/broadcasts/${broadcastId}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: replyText.trim() }),

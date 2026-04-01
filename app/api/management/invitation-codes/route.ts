@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import getAuthUser from "@/lib/auth-helper"
 import crypto from "crypto"
+import { checkDemoLimit } from "@/lib/demo-limits"
 
 async function requireAdmin() {
   const user = await getAuthUser()
@@ -36,6 +37,9 @@ export async function POST(req: Request) {
   if (existing) {
     return NextResponse.json({ error: "Code already exists" }, { status: 409 })
   }
+
+  const limitErr = await checkDemoLimit("InvitationCode")
+  if (limitErr) return NextResponse.json(limitErr, { status: 403 })
 
   const registerAsAdmin = body.registerAsAdmin === true
 

@@ -1,6 +1,7 @@
 import getAuthUser from "@/lib/auth-helper"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { checkDemoLimit } from "@/lib/demo-limits"
 
 export async function GET(
   _req: Request,
@@ -57,6 +58,9 @@ export async function POST(
   if (!content || typeof content !== "string" || content.trim().length === 0) {
     return NextResponse.json({ error: "Content required" }, { status: 400 })
   }
+
+  const limitErr = await checkDemoLimit("BroadcastComment")
+  if (limitErr) return NextResponse.json(limitErr, { status: 403 })
 
   const comment = await prisma.broadcastComment.create({
     data: {

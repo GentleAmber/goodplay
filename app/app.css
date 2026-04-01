@@ -117,3 +117,71 @@ nav > div > button:last-child:hover {
 .hyperlink {
   text-decoration: underline;
 }
+
+/* ── Theme toggle button ────────────────────────────────────────────── */
+
+.theme-toggle {
+  background: transparent;
+  border: 1px solid #4b5563;
+  border-radius: 0.375rem;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.375rem 0.5rem;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.theme-toggle:hover {
+  color: #fff;
+  border-color: #9ca3af;
+}
+
+/* ── Navbar light mode ──────────────────────────────────────────────── */
+
+[data-theme="light"] nav {
+  background: #ffffff;
+  border-bottom-color: #d1d5db;
+}
+
+[data-theme="light"] nav > a {
+  color: #374151;
+}
+
+[data-theme="light"] nav > a:hover {
+  color: #111827;
+}
+
+[data-theme="light"] .theme-toggle {
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+[data-theme="light"] .theme-toggle:hover {
+  color: #111827;
+  border-color: #9ca3af;
+}
+
+[data-theme="light"] .dropdown-menu {
+  background: #ffffff;
+  border-color: #d1d5db;
+}
+
+[data-theme="light"] .dropdown-menu > * {
+  color: #374151;
+}
+
+[data-theme="light"] .dropdown-menu > *:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+[data-theme="light"] nav > div > button:last-child {
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+
+[data-theme="light"] nav > div > button:last-child:hover {
+  background: #f3f4f6;
+  color: #111827;
+}

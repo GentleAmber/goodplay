@@ -7,7 +7,6 @@ import { useSearchParams, useRouter } from "next/navigation"
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/"
   const [error, setError] = useState("")
 
   return (
@@ -75,7 +74,7 @@ export default function LoginPage() {
     if (res?.error) {
       setError("Invalid username or password")
     } else {
-      router.push(callbackUrl)
+      router.push("/")
     }
   }
 }

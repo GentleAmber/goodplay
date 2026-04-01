@@ -20,6 +20,7 @@ import {
 import { Role } from "@/generated/prisma"
 import STATUS_CONFIG from "@/app/_types/GameStatus"
 import { proxiedImageUrl } from "@/lib/image-proxy"
+import { fetchWithLimit } from "@/lib/fetch-with-limit"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -139,7 +140,7 @@ export default function UserProfilePage() {
 
   async function handleFollow() {
     if (!session) return
-    const res = await fetch(`/api/users/${id}/follow`, { method: "POST" })
+    const res = await fetchWithLimit(`/api/users/${id}/follow`, { method: "POST" })
     if (res.ok) {
       const data = await res.json()
       setFollowing(data.following)
@@ -149,7 +150,7 @@ export default function UserProfilePage() {
 
   async function handleBan() {
     setBanActing(true)
-    const res = await fetch("/api/management/ban", {
+    const res = await fetchWithLimit("/api/management/ban", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: parseInt(id, 10), duration: banDuration }),
@@ -163,7 +164,7 @@ export default function UserProfilePage() {
 
   async function handleUnban() {
     setBanActing(true)
-    const res = await fetch(`/api/management/ban?userId=${id}`, { method: "DELETE" })
+    const res = await fetchWithLimit(`/api/management/ban?userId=${id}`, { method: "DELETE" })
     if (res.ok) loadProfile()
     setBanActing(false)
   }
@@ -521,13 +522,13 @@ function BroadcastsSection({
 
   async function handleLike(broadcastId: number) {
     if (!hasSession) return
-    await fetch(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
+    await fetchWithLimit(`/api/broadcasts/${broadcastId}/like`, { method: "POST" })
     loadBroadcasts()
   }
 
   async function handleDeleteBroadcast(broadcastId: number) {
     if (!confirm("Delete this broadcast?")) return
-    const res = await fetch(`/api/broadcasts/${broadcastId}`, { method: "DELETE" })
+    const res = await fetchWithLimit(`/api/broadcasts/${broadcastId}`, { method: "DELETE" })
     if (res.ok) loadBroadcasts()
   }
 
@@ -551,7 +552,7 @@ function BroadcastsSection({
 
   async function handleReply(broadcastId: number) {
     if (!hasSession || !replyText.trim()) return
-    await fetch(`/api/broadcasts/${broadcastId}/reply`, {
+    await fetchWithLimit(`/api/broadcasts/${broadcastId}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: replyText.trim() }),

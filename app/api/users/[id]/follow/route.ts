@@ -1,6 +1,7 @@
 import getAuthUser from "@/lib/auth-helper"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { checkDemoLimit } from "@/lib/demo-limits"
 
 export async function POST(
   _req: Request,
@@ -31,6 +32,9 @@ export async function POST(
     })
     return NextResponse.json({ following: !existing.ifActive })
   }
+
+  const limitErr = await checkDemoLimit("Follow")
+  if (limitErr) return NextResponse.json(limitErr, { status: 403 })
 
   await prisma.follow.create({
     data: { followingUserId: viewer.id, followedUserId: targetId },

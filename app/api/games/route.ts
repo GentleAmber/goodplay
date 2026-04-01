@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma"
 import crypto from "crypto"
+import { checkDemoLimit } from "@/lib/demo-limits"
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
@@ -93,6 +94,9 @@ export async function POST(req: Request) {
   if (user.banned) {
     return NextResponse.json({ error: "You are banned" }, { status: 403 })
   }
+
+  const limitErr = await checkDemoLimit("Game")
+  if (limitErr) return NextResponse.json(limitErr, { status: 403 })
 
   const body = await req.json()
   const {

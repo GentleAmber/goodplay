@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { NextRequest, NextResponse } from "next/server"
 import { Role } from "@/generated/prisma"
+import { checkDemoLimit } from "@/lib/demo-limits"
 
 
 export async function POST(req: NextRequest) {
@@ -49,6 +50,9 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     )
   }
+
+  const limitErr = await checkDemoLimit("User")
+  if (limitErr) return NextResponse.json(limitErr, { status: 403 })
 
   const hashedPassword = await bcrypt.hash(password, 10)
 

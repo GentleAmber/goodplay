@@ -5,13 +5,16 @@ import { useSession, signIn, signOut } from "next-auth/react"
 import { useRef, useState, useEffect } from "react"
 import { Role } from "@/generated/prisma"
 import { proxiedImageUrl } from "@/lib/image-proxy"
+import { useTheme } from "@/app/_components/ThemeProvider"
+import { Sun, Moon } from "lucide-react"
 
 export default function Component() {
-  
+
   const [avatar, setAvatar] = useState(null)
   const { data: session, status } = useSession()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const { theme, toggle } = useTheme()
 
   useEffect(() => {
     if (!dropdownOpen) return
@@ -41,6 +44,9 @@ export default function Component() {
     <nav>
       <Link href="/"><span>Goodplay</span></Link>
       <Link href="/library/videogames"><span>Browse</span></Link>
+      <button onClick={toggle} className="theme-toggle" aria-label="Toggle theme">
+        {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
       {session
         ? <div className="dropdown" ref={dropdownRef}>
             <div id="navbar-avatar" onClick={() => setDropdownOpen((v) => !v)}>
