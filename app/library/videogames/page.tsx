@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
@@ -39,7 +39,15 @@ interface SearchResult {
 
 // ── Component ────────────────────────────────────────────────────────
 
-export default function VideogamesLibrary() {
+export default function VideogamesLibraryPage() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center text-gray-500">Loading...</div>}>
+      <VideogamesLibrary />
+    </Suspense>
+  )
+}
+
+function VideogamesLibrary() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = useSession()

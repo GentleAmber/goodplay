@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSession } from "next-auth/react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -52,7 +52,15 @@ function statusLabel(s: string) {
 
 // ── Component ────────────────────────────────────────────────────────
 
-export default function ReviewsPage() {
+export default function ReviewsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center text-gray-500">Loading...</div>}>
+      <ReviewsPage />
+    </Suspense>
+  )
+}
+
+function ReviewsPage() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()

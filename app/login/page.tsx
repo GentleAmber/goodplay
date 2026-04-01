@@ -2,11 +2,10 @@
 
 import { signIn } from "next-auth/react"
 import { useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [error, setError] = useState("")
 
   return (
