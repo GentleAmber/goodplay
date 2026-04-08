@@ -1,6 +1,6 @@
 Goodplay is a Goodreads-style platform for gamers, built as a portfolio project to explore AI-assisted development.
 
-[Live app](https://goodplay-sigma.vercel.app/)
+<b>[Live app](https://goodplay-sigma.vercel.app/)</b>
 
 ## Development Process
 
