@@ -1,5 +1,7 @@
 Goodplay is a Goodreads-style platform for gamers, built as a portfolio project to explore AI-assisted development.
 
+[Live app](https://goodplay-sigma.vercel.app/)
+
 ## Development Process
 
 This is a workflow I have figured out and used during the building process. It enables me and any programmer who has not touched a tool or framework (like prisma or Next.js in this example) to be able to finish a project with them in a relatively short time.
