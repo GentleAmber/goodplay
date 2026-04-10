@@ -35,6 +35,18 @@ body {
 
 .text-gray-400  { color: #ededed; }
 
+/* ── Dark mode overrides (manual toggle) ───────────────────────────── */
+
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+[data-theme="dark"] body {
+  background: #0a0a0a;
+  color: #ededed;
+}
+
 /* ── Light mode overrides ───────────────────────────────────────────── */
 
 [data-theme="light"] {

@@ -69,7 +69,7 @@ export default function Component() {
               </div>
             </div>
           </div>
-        : <div>
+        : <div className="nav-auth">
             <button onClick={() => signIn()}>Sign in</button>
             <button onClick={() => window.location.href = "/register"}>Register</button>
           </div>
