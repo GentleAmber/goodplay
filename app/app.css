@@ -216,3 +216,16 @@ nav > div > button:last-child:hover {
   background: #f3f4f6;
   color: #111827;
 }
+
+/* ── Cookie banner ───────────────────────────────────────────────────── */
+
+@keyframes cookie-rise {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+#cookie-banner {
+  padding-top: 2.5rem;
+  padding-bottom: 3rem;
+  animation: cookie-rise 0.9s ease-out;
+}

@@ -6,6 +6,7 @@ import AuthProvider from "@/app/_components/SessionProvider"
 import Navbar from "@/app/_components/Navbar"
 import Footer from "@/app/_components/Footer"
 import ThemeProvider from "@/app/_components/ThemeProvider"
+import CookieBanner from "@/app/_components/CookieBanner"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
             <Navbar />
               {children}
             <Footer />
+            <CookieBanner />
           </ThemeProvider>
         </AuthProvider>
       </body>
